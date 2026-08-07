@@ -15,3 +15,6 @@ __pycache__/
 
 # Local source and uploaded documents may contain private information.
 docs/
+
+# Keep the local project notes out of the remote repository.
+README.md
