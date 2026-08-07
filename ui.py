@@ -79,6 +79,7 @@ def initialize_state() -> None:
     st.session_state.setdefault("documents", [])
     st.session_state.setdefault("documents_loaded", False)
     st.session_state.setdefault("selected_document_ids", [])
+    st.session_state.setdefault("delete_notice", None)
     if st.session_state.active_chat_id is None:
         create_new_chat()
 
@@ -87,6 +88,9 @@ def render_sidebar(api_url: str) -> None:
     """Render the collapsible native sidebar with uploads and chat topics."""
     with st.sidebar:
         st.header("ContextVault", anchor=False)
+        delete_notice = st.session_state.pop("delete_notice")
+        if delete_notice:
+            st.toast(delete_notice, icon=":material/delete:")
         if st.button("New chat", icon=":material/add_comment:", width="stretch"):
             create_new_chat()
             st.rerun()
@@ -133,6 +137,22 @@ def render_sidebar(api_url: str) -> None:
                 key="selected_document_ids",
                 placeholder="Choose one or more documents",
             )
+            selected_document_ids = st.session_state.selected_document_ids
+            if st.button(
+                "Delete selected documents",
+                icon=":material/delete:",
+                disabled=not selected_document_ids,
+                width="stretch",
+            ):
+                try:
+                    deleted_documents = delete_documents(api_url, selected_document_ids)
+                    refresh_documents(api_url)
+                    st.session_state.delete_notice = (
+                        f"Deleted {len(deleted_documents)} document(s) from local storage and the index."
+                    )
+                    st.rerun()
+                except (HTTPError, URLError) as error:
+                    st.error(f"Could not delete the selected documents: {format_error(error)}", icon=":material/error:")
         else:
             st.caption("Upload a document, then select it here before asking a question.")
 
@@ -268,6 +288,16 @@ def upload_files(api_url: str, files: list[object]) -> dict[str, object]:
     )
     with urlopen(request, timeout=600) as response:  # noqa: S310 -- local configurable API endpoint.
         return dict(json.loads(response.read().decode("utf-8")))
+
+
+def delete_documents(api_url: str, document_ids: list[str]) -> list[dict[str, str]]:
+    """Delete selected uploads from the API, vector index, and local storage."""
+    deleted_documents: list[dict[str, str]] = []
+    for document_id in document_ids:
+        request = Request(f"{api_url.rstrip('/')}/documents/{document_id}", method="DELETE")
+        with urlopen(request, timeout=30) as response:  # noqa: S310 -- local configurable API endpoint.
+            deleted_documents.append(dict(json.loads(response.read().decode("utf-8"))))
+    return deleted_documents
 
 
 def display_source_names(sources: object) -> list[str]:

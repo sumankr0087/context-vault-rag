@@ -5,7 +5,14 @@ import unittest
 from pathlib import Path
 from unittest.mock import Mock
 
-from api import ChatRequest, _list_uploaded_documents, _load_and_chunk_uploads, _sources_for_document_ids, _sse_event
+from api import (
+    ChatRequest,
+    _delete_uploaded_document,
+    _list_uploaded_documents,
+    _load_and_chunk_uploads,
+    _sources_for_document_ids,
+    _sse_event,
+)
 from config import get_settings
 
 
@@ -66,3 +73,29 @@ class ApiTests(unittest.TestCase):
             _sources_for_document_ids(vectorstore, ["certificate-id"]),
             ["docs/uploaded/other/internal-id_certificate.pdf"],
         )
+
+    def test_delete_uploaded_document_removes_its_file_and_index_chunks(self) -> None:
+        """Deleting an upload removes its persisted source and its Chroma records."""
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            docs_dir = Path(temporary_directory) / "docs"
+            document_id = "a" * 32
+            uploaded_file = docs_dir / "uploaded" / "other" / f"{document_id}_certificate.txt"
+            uploaded_file.parent.mkdir(parents=True)
+            uploaded_file.write_text("Certificate text.", encoding="utf-8")
+            vectorstore = Mock()
+            vectorstore.get.return_value = {
+                "metadatas": [
+                    {
+                        "source": str(uploaded_file),
+                        "document_id": document_id,
+                        "document_name": "certificate.txt",
+                    }
+                ]
+            }
+
+            deleted = _delete_uploaded_document(vectorstore, docs_dir, document_id)
+            self.assertFalse(uploaded_file.exists())
+
+        self.assertEqual(deleted.id, document_id)
+        self.assertEqual(deleted.name, "certificate.txt")
+        vectorstore.delete.assert_called_once_with(where={"source": str(uploaded_file)})

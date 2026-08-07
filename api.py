@@ -59,6 +59,13 @@ class UploadedDocument(BaseModel):
     name: str
 
 
+class DeleteDocumentResponse(BaseModel):
+    """Describe one uploaded document removed from local storage and the index."""
+
+    id: str
+    name: str
+
+
 @dataclass(frozen=True)
 class ApiServices:
     """Hold the process-wide collaborators created during application startup."""
@@ -219,6 +226,19 @@ def create_app() -> FastAPI:
             documents=uploaded_documents,
         )
 
+    @application.delete("/documents/{document_id}", response_model=DeleteDocumentResponse)
+    async def delete_document(document_id: str, request: Request) -> DeleteDocumentResponse:
+        """Remove one uploaded document from both the Chroma index and local disk."""
+        services: ApiServices = request.app.state.services
+        deleted = await asyncio.to_thread(
+            _delete_uploaded_document,
+            services.vectorstore,
+            services.settings.docs_dir,
+            document_id,
+        )
+        request.app.state.services = replace(services, indexed=has_index(services.vectorstore))
+        return deleted
+
     return application
 
 
@@ -249,7 +269,7 @@ def _list_uploaded_documents(vectorstore: object) -> list[UploadedDocument]:
         if not metadata:
             continue
         source = str(metadata.get("source", ""))
-        if not source.startswith("docs/uploaded/"):
+        if not _is_uploaded_source(source, metadata):
             continue
         document_id = str(metadata.get("document_id") or _document_id_from_source(source))
         document_name = str(metadata.get("document_name") or _document_name_from_source(source))
@@ -257,23 +277,50 @@ def _list_uploaded_documents(vectorstore: object) -> list[UploadedDocument]:
     return sorted(documents.values(), key=lambda document: document.name.casefold())
 
 
-def _sources_for_document_ids(vectorstore: object, document_ids: list[str]) -> list[str] | None:
-    """Resolve public document IDs to indexed source paths before querying Chroma."""
-    if not document_ids:
-        return None
+def _uploaded_sources_by_document_id(vectorstore: object) -> dict[str, str]:
+    """Map each public uploaded-document ID to its internal source path."""
     records = vectorstore.get(include=["metadatas"])
-    source_by_id: dict[str, str] = {}
+    sources: dict[str, str] = {}
     for metadata in records.get("metadatas", []):
         if not metadata:
             continue
         source = str(metadata.get("source", ""))
-        if source.startswith("docs/uploaded/"):
+        if _is_uploaded_source(source, metadata):
             document_id = str(metadata.get("document_id") or _document_id_from_source(source))
-            source_by_id[document_id] = source
+            sources[document_id] = source
+    return sources
+
+
+def _is_uploaded_source(source: str, metadata: dict[str, object]) -> bool:
+    """Recognize an API-uploaded source without exposing or trusting its path."""
+    return bool(metadata.get("document_id")) or "uploaded" in Path(source).parts
+
+
+def _sources_for_document_ids(vectorstore: object, document_ids: list[str]) -> list[str] | None:
+    """Resolve public document IDs to indexed source paths before querying Chroma."""
+    if not document_ids:
+        return None
+    source_by_id = _uploaded_sources_by_document_id(vectorstore)
     missing_ids = set(document_ids) - source_by_id.keys()
     if missing_ids:
         raise HTTPException(status_code=400, detail="One or more selected documents are unavailable.")
     return [source_by_id[document_id] for document_id in document_ids]
+
+
+def _delete_uploaded_document(vectorstore: object, docs_dir: Path, document_id: str) -> DeleteDocumentResponse:
+    """Delete an uploaded document's chunks and its stored source file."""
+    source_by_id = _uploaded_sources_by_document_id(vectorstore)
+    source = source_by_id.get(document_id)
+    if source is None:
+        raise HTTPException(status_code=404, detail="Document is unavailable.")
+    document_path = Path(source)
+    upload_directory = (docs_dir / "uploaded").resolve()
+    resolved_path = document_path.resolve()
+    if not resolved_path.is_relative_to(upload_directory):
+        raise HTTPException(status_code=500, detail="Document storage path is invalid.")
+    vectorstore.delete(where={"source": source})
+    resolved_path.unlink(missing_ok=True)
+    return DeleteDocumentResponse(id=document_id, name=_document_name_from_source(source))
 
 
 def _document_id_from_source(source: str) -> str:
