@@ -1,0 +1,17 @@
+# Local credentials
+.env
+
+# Local editor, assistant, and operating-system files
+.agents/
+.claude/
+.DS_Store
+
+# Generated application state
+data/
+
+# Python build and cache files
+__pycache__/
+*.py[cod]
+
+# Local source and uploaded documents may contain private information.
+docs/

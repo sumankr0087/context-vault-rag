@@ -1,0 +1,14 @@
+[
+  {
+    "question": "What SQL concepts are covered?",
+    "expected_sources": ["docs/SQL_problem.pdf"]
+  },
+  {
+    "question": "What is Python used for?",
+    "expected_sources": ["docs/basic python program.pdf"]
+  },
+  {
+    "question": "What is artificial intelligence?",
+    "expected_sources": ["docs/Dummy_AI_Notes.txt"]
+  }
+]

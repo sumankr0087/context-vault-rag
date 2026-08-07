@@ -1,0 +1,8 @@
+langchain-chroma
+langchain-core
+langchain-ollama
+langchain-text-splitters
+pypdf
+fastapi
+uvicorn[standard]
+streamlit
