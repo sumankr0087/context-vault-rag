@@ -3,8 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import {
-  FiSend, FiSettings, FiInfo, FiX, FiUploadCloud, FiTrash2, FiFileText,
-  FiGitPullRequest, FiMenu,
+  FiSend, FiSettings, FiInfo, FiX, FiUploadCloud, FiTrash2, FiFileText, FiMenu,
 } from "react-icons/fi";
 
 const DEFAULT_API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -29,11 +28,6 @@ export default function Home() {
   const [error, setError] = useState("");
   const [hybrid, setHybrid] = useState(true);
   const [rerank, setRerank] = useState(true);
-
-  const [cmpA, setCmpA] = useState("");
-  const [cmpB, setCmpB] = useState("");
-  const [cmpTopic, setCmpTopic] = useState("");
-  const [comparing, setComparing] = useState(false);
 
   const fileRef = useRef<HTMLInputElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
@@ -108,26 +102,6 @@ export default function Home() {
     } finally { setLoading(false); }
   }
 
-  async function compare() {
-    if (!cmpA || !cmpB || cmpA === cmpB || comparing) return;
-    setComparing(true); setError("");
-    const a = docs.find((d) => d.id === cmpA)?.name || "A";
-    const b = docs.find((d) => d.id === cmpB)?.name || "B";
-    setMessages((m) => [...m, { role: "user", text: `Compare "${a}" vs "${b}"${cmpTopic ? ` — ${cmpTopic}` : ""}` }]);
-    try {
-      const r = await fetch(`${base()}/compare`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ document_id_a: cmpA, document_id_b: cmpB, topic: cmpTopic || null }),
-      });
-      if (!r.ok) throw new Error(`API ${r.status}`);
-      const d = await r.json();
-      setMessages((m) => [...m, { role: "assistant", text: d.report }]);
-    } catch (e) {
-      setError(`Comparison failed. ${e instanceof Error ? e.message : ""}`);
-    } finally { setComparing(false); }
-  }
-
   return (
     <div className="flex h-[100dvh] overflow-hidden">
       {/* Sidebar */}
@@ -165,24 +139,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Version compare */}
-          <div>
-            <p className="text-[0.65rem] uppercase tracking-widest text-neutral-400 mb-2 flex items-center gap-1">
-              <FiGitPullRequest /> Compare versions
-            </p>
-            <select value={cmpA} onChange={(e) => setCmpA(e.target.value)} className="field mb-1.5 text-xs">
-              <option value="">Version A (older)…</option>
-              {docs.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
-            </select>
-            <select value={cmpB} onChange={(e) => setCmpB(e.target.value)} className="field mb-1.5 text-xs">
-              <option value="">Version B (newer)…</option>
-              {docs.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
-            </select>
-            <input value={cmpTopic} onChange={(e) => setCmpTopic(e.target.value)} placeholder="Topic (optional)" className="field mb-2 text-xs" />
-            <button onClick={compare} disabled={!cmpA || !cmpB || cmpA === cmpB || comparing} className="btn w-full">
-              {comparing ? "Comparing…" : "Compare"}
-            </button>
-          </div>
         </div>
         <div className="p-3 border-t border-white/10 text-[0.65rem] text-neutral-500">
           Built by Suman Kumar ·{" "}
@@ -296,7 +252,6 @@ function AboutModal({ onClose }: { onClose: () => void }) {
     ["🔖 Clause-level citations", "Each claim cites the exact excerpt [n] with its source file and page."],
     ["🛡️ Hallucination guardrail", "If the documents don't cover it, it clearly says so instead of guessing."],
     ["⚠️ Compliance notes", "Flags risks, limits and obligations on policy/rule questions."],
-    ["🔀 Version comparison", "Upload v1 & v2 of a policy and see exactly what changed."],
     ["🔎 Hybrid search + reranking", "Dense + keyword retrieval, then a cross-encoder reranks for accuracy."],
   ];
   return (
