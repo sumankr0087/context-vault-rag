@@ -34,7 +34,7 @@ jobs:
       - name: Build static site
         env:
           NEXT_PUBLIC_BASE_PATH: /context-vault-rag
-          NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL }}
+          NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL || 'https://context-vault-rag.onrender.com' }}
         run: npm run build
       - uses: actions/configure-pages@v5
         with:
