@@ -2,7 +2,7 @@
 
 import asyncio
 from collections.abc import AsyncIterator
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from langchain_chroma import Chroma
 from langchain_core.messages import BaseMessage
@@ -12,7 +12,7 @@ from llm.ollama_client import create_chat_model
 from llm.prompts import build_rag_prompt
 from memory.history import get_chat_history
 from memory.sqlite_memory import SQLiteMemory
-from rag.context import final_answer_text, format_document_context
+from rag.context import build_citations, final_answer_text, format_document_context
 from rag.pipeline import Answer
 from rag.streaming import async_stream_response
 from utils.metadata import source_paths
@@ -25,6 +25,7 @@ class AsyncStreamingAnswer:
 
     tokens: AsyncIterator[str]
     sources: list[str]
+    citations: list[dict] = field(default_factory=list)
 
 
 class AsyncRagPipeline:
@@ -58,10 +59,10 @@ class AsyncRagPipeline:
             rerank,
         )
         if prompt_input is None:
-            return Answer("I could not find relevant information in your documents.", [])
-        messages, sources = prompt_input
+            return Answer("Based on the available documents, there is insufficient evidence to answer this question.", [])
+        messages, sources, citations = prompt_input
         response = await self._chat_model.ainvoke(messages)
-        return Answer(final_answer_text(response.content), sources)
+        return Answer(final_answer_text(response.content), sources, citations)
 
     async def stream_answer(
         self,
@@ -84,9 +85,9 @@ class AsyncRagPipeline:
             rerank,
         )
         if prompt_input is None:
-            return AsyncStreamingAnswer(self._no_documents_stream(), [])
-        messages, sources = prompt_input
-        return AsyncStreamingAnswer(async_stream_response(self._chat_model, messages), sources)
+            return AsyncStreamingAnswer(self._no_documents_stream(), [], [])
+        messages, sources, citations = prompt_input
+        return AsyncStreamingAnswer(async_stream_response(self._chat_model, messages), sources, citations)
 
     async def _build_prompt_input(
         self,
@@ -97,7 +98,7 @@ class AsyncRagPipeline:
         mmr_lambda_mult: float | None,
         hybrid: bool,
         rerank: bool,
-    ) -> tuple[list[BaseMessage], list[str]] | None:
+    ) -> tuple[list[BaseMessage], list[str], list[dict]] | None:
         """Retrieve documents and history concurrently, then build a shared prompt."""
         lambda_mult = self._settings.mmr_lambda_mult if mmr_lambda_mult is None else mmr_lambda_mult
         documents, chat_history = await asyncio.gather(
@@ -123,8 +124,8 @@ class AsyncRagPipeline:
             question=question,
             context=format_document_context(documents),
         )
-        return messages, source_paths(documents)
+        return messages, source_paths(documents), build_citations(documents)
 
     async def _no_documents_stream(self) -> AsyncIterator[str]:
         """Provide a stream-shaped response when retrieval produces no context."""
-        yield "I could not find relevant information in your documents."
+        yield "Based on the available documents, there is insufficient evidence to answer this question."

@@ -37,10 +37,11 @@ class ChatRequest(BaseModel):
 
 
 class ChatResponse(BaseModel):
-    """Return one complete answer and the sources that grounded it."""
+    """Return one complete answer, its sources, and clause-level citations."""
 
     answer: str
     sources: list[str]
+    citations: list[dict] = Field(default_factory=list)
 
 
 class UploadResponse(BaseModel):
@@ -125,7 +126,7 @@ def create_app() -> FastAPI:
             payload.rerank,
         )
         await asyncio.to_thread(services.memory.save, payload.session, "assistant", answer.text)
-        return ChatResponse(answer=answer.text, sources=answer.sources)
+        return ChatResponse(answer=answer.text, sources=answer.sources, citations=answer.citations)
 
     @application.post("/chat/stream")
     async def stream_chat(payload: ChatRequest, request: Request) -> StreamingResponse:
@@ -150,7 +151,7 @@ def create_app() -> FastAPI:
                     yield _sse_event("token", {"text": token})
                 answer_text = "".join(answer_parts)
                 await asyncio.to_thread(services.memory.save, payload.session, "assistant", answer_text)
-                yield _sse_event("sources", {"sources": answer.sources})
+                yield _sse_event("sources", {"sources": answer.sources, "citations": answer.citations})
                 yield _sse_event("done", {})
             except Exception:
                 yield _sse_event("error", {"message": "Unable to generate an answer. Please try again."})
