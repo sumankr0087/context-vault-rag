@@ -10,6 +10,7 @@ from typing import AsyncIterator, Literal
 from uuid import uuid4
 
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
@@ -117,8 +118,16 @@ def create_app() -> FastAPI:
     application = FastAPI(
         title="ContextVault API",
         version="1.0.0",
-        description="Local RAG chat with complete and Server-Sent Event responses.",
+        description="RAG chat with citations, guardrails, version comparison, and SSE streaming.",
         lifespan=lifespan,
+    )
+
+    # Allow the static frontend (GitHub Pages / localhost) to call the API.
+    application.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_methods=["*"],
+        allow_headers=["*"],
     )
 
     @application.get("/health")
