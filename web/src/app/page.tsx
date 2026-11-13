@@ -27,7 +27,6 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [hybrid, setHybrid] = useState(true);
-  const [rerank, setRerank] = useState(true);
 
   const fileRef = useRef<HTMLInputElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
@@ -88,7 +87,7 @@ export default function Home() {
       const r = await fetch(`${base()}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ session: "web", question: text, hybrid, rerank }),
+        body: JSON.stringify({ session: "web", question: text, hybrid, rerank: false }),
       });
       if (r.status === 503) {
         setMessages((m) => [...m, { role: "assistant", text: "No documents are indexed yet. Upload a document on the left, then ask again." }]);
@@ -235,7 +234,6 @@ export default function Home() {
             </div>
             <div className="flex items-center gap-4 mt-2 px-1 text-[0.7rem] text-neutral-400">
               <label className="flex items-center gap-1 cursor-pointer"><input type="checkbox" checked={hybrid} onChange={(e) => setHybrid(e.target.checked)} /> Hybrid search</label>
-              <label className="flex items-center gap-1 cursor-pointer"><input type="checkbox" checked={rerank} onChange={(e) => setRerank(e.target.checked)} /> Reranking</label>
             </div>
           </div>
         </div>
@@ -252,7 +250,7 @@ function AboutModal({ onClose }: { onClose: () => void }) {
     ["🔖 Clause-level citations", "Each claim cites the exact excerpt [n] with its source file and page."],
     ["🛡️ Hallucination guardrail", "If the documents don't cover it, it clearly says so instead of guessing."],
     ["⚠️ Compliance notes", "Flags risks, limits and obligations on policy/rule questions."],
-    ["🔎 Hybrid search + reranking", "Dense + keyword retrieval, then a cross-encoder reranks for accuracy."],
+    ["🔎 Hybrid search", "Combines dense (semantic) and keyword retrieval for better matches."],
   ];
   return (
     <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onClick={onClose}>
@@ -274,7 +272,7 @@ function AboutModal({ onClose }: { onClose: () => void }) {
           ))}
         </ul>
         <p className="text-xs text-neutral-500">
-          Built with LangChain · Chroma · hybrid search · cross-encoder reranking · Groq / Ollama. The demo
+          Built with LangChain · Chroma · hybrid search · FastEmbed · Groq. The demo
           backend is on a free tier that sleeps, so the first request may take ~50s. Uploaded docs are
           temporary on the free tier.{" "}
           <a className="text-violet-300" target="_blank" rel="noreferrer" href="https://github.com/sumankr0087/context-vault-rag">Source on GitHub</a>.

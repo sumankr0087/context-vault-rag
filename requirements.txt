@@ -4,9 +4,7 @@ langchain-ollama
 langchain-text-splitters
 langchain-community
 langchain-openai
-langchain-huggingface
-sentence-transformers
+fastembed
 pypdf
 fastapi
 uvicorn[standard]
-streamlit

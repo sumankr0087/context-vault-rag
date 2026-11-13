@@ -9,6 +9,12 @@ from config import Settings
 
 def create_embeddings(settings: Settings):
     """Create the embedding client used by Chroma for indexing and retrieval."""
+    if settings.embedding_provider == "fastembed":
+        # ONNX-based, no PyTorch — fits small (512MB) cloud instances.
+        from langchain_community.embeddings import FastEmbedEmbeddings
+
+        return FastEmbedEmbeddings(model_name=settings.fastembed_model)
+
     if settings.embedding_provider == "huggingface":
         from langchain_huggingface import HuggingFaceEmbeddings
 

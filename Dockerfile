@@ -10,16 +10,17 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# Cloud defaults: cloud LLM + serverless embeddings, writable dirs.
+# Cloud defaults: cloud LLM + lightweight ONNX embeddings (no PyTorch),
+# so the service fits in a 512MB free instance.
 ENV LLM_PROVIDER=groq \
     LLM_MODEL=openai/gpt-oss-120b \
-    EMBEDDING_PROVIDER=huggingface \
-    HF_EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2 \
+    EMBEDDING_PROVIDER=fastembed \
+    FASTEMBED_MODEL=BAAI/bge-small-en-v1.5 \
     DATA_DIR=/app/data \
-    HF_HOME=/app/.cache/huggingface
+    FASTEMBED_CACHE_PATH=/app/.cache/fastembed
 
-# Pre-download the embedding model so first request isn't slow / failing.
-RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')" || true
+# Pre-download the embedding model so the first request isn't slow / failing.
+RUN python -c "from fastembed import TextEmbedding; TextEmbedding('BAAI/bge-small-en-v1.5')" || true
 
 EXPOSE 7860
 

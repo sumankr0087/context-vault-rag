@@ -17,8 +17,8 @@ services:
       - key: GROQ_API_KEY
         sync: false
       - key: EMBEDDING_PROVIDER
-        value: huggingface
-      - key: HF_EMBEDDING_MODEL
-        value: sentence-transformers/all-MiniLM-L6-v2
+        value: fastembed
+      - key: FASTEMBED_MODEL
+        value: BAAI/bge-small-en-v1.5
       - key: DATA_DIR
         value: /app/data
