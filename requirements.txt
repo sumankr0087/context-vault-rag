@@ -7,4 +7,5 @@ langchain-openai
 fastembed
 pypdf
 fastapi
+python-multipart
 uvicorn[standard]
