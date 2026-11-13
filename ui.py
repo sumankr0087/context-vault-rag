@@ -29,9 +29,9 @@ def stream_chat(api_url: str, payload: dict[str, object]) -> Iterator[tuple[str,
 
 
 def main() -> None:
-    """Render the ContextVault document chat workspace."""
+    """Render the DocuSense document chat workspace."""
     st.set_page_config(
-        page_title="ContextVault",
+        page_title="DocuSense",
         page_icon=":material/forum:",
         initial_sidebar_state="expanded",
     )
@@ -42,7 +42,7 @@ def main() -> None:
     active_chat = get_active_chat()
 
     render_sidebar(api_url)
-    st.title("ContextVault", anchor=False)
+    st.title("DocuSense", anchor=False)
     st.caption("Private, local answers grounded in the documents you upload.")
 
     for message in active_chat["messages"]:
@@ -87,7 +87,7 @@ def initialize_state() -> None:
 def render_sidebar(api_url: str) -> None:
     """Render the collapsible native sidebar with uploads and chat topics."""
     with st.sidebar:
-        st.header("ContextVault", anchor=False)
+        st.header("DocuSense", anchor=False)
         delete_notice = st.session_state.pop("delete_notice")
         if delete_notice:
             st.toast(delete_notice, icon=":material/delete:")

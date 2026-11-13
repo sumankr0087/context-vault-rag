@@ -1,8 +1,8 @@
-# ContextVault — Project Guide
+# DocuSense — Project Guide
 
 ## What this project does
 
-ContextVault is a local document-question-answering application. Upload PDF, TXT, or Markdown files, then ask questions in a chat interface. The assistant retrieves the most relevant passages from your documents and uses them as context for its answer.
+DocuSense is a local document-question-answering application. Upload PDF, TXT, or Markdown files, then ask questions in a chat interface. The assistant retrieves the most relevant passages from your documents and uses them as context for its answer.
 
 Your documents, vector index, conversation memory, and AI inference stay on your machine. The project is designed for personal notes, study material, technical documentation, reports, resumes, and other private files.
 

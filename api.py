@@ -116,7 +116,7 @@ def create_app() -> FastAPI:
         yield
 
     application = FastAPI(
-        title="ContextVault API",
+        title="DocuSense API",
         version="1.0.0",
         description="RAG chat with citations, guardrails, version comparison, and SSE streaming.",
         lifespan=lifespan,

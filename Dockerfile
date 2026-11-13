@@ -1,4 +1,4 @@
-# ContextVault backend (FastAPI). Runs on Groq LLM + HuggingFace embeddings,
+# DocuSense backend (FastAPI). Runs on Groq LLM + FastEmbed (ONNX) embeddings,
 # so it needs no local Ollama. Works on Render / any Docker host.
 FROM python:3.11-slim
 

@@ -153,7 +153,7 @@ export default function Home() {
             <button className="md:hidden text-neutral-300" onClick={() => setSidebarOpen(true)}><FiMenu size={20} /></button>
             <span className="text-xl">🔐</span>
             <div className="min-w-0">
-              <h1 className="font-bold glow-text truncate leading-tight">ContextVault</h1>
+              <h1 className="font-bold glow-text truncate leading-tight">DocuSense</h1>
               <p className="hidden sm:block text-[0.65rem] text-neutral-400 leading-tight">Ask your documents — grounded answers with citations</p>
             </div>
           </div>
@@ -256,11 +256,11 @@ function AboutModal({ onClose }: { onClose: () => void }) {
     <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onClick={onClose}>
       <div className="card max-w-lg w-full max-h-[85vh] overflow-y-auto p-6" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-start justify-between mb-3">
-          <h2 className="text-xl font-bold glow-text">About ContextVault</h2>
+          <h2 className="text-xl font-bold glow-text">About DocuSense</h2>
           <button onClick={onClose} className="text-neutral-400 hover:text-white"><FiX size={20} /></button>
         </div>
         <p className="text-sm text-neutral-300 leading-relaxed mb-4">
-          <strong>ContextVault</strong> is an enterprise document & policy assistant. Upload your documents
+          <strong>DocuSense</strong> is an enterprise document & policy assistant. Upload your documents
           (PDF / TXT / Markdown), then ask questions in plain English — e.g. <em>"Can I share client data
           externally?"</em>. It retrieves the exact clauses, explains them simply, flags compliance risks,
           and can compare two versions of a policy.

@@ -1,4 +1,4 @@
-# Render.com free deployment for the ContextVault backend.
+# Render.com free deployment for the DocuSense backend.
 # 1. Push to GitHub (done).
 # 2. render.com -> New -> Blueprint -> pick this repo.
 # 3. Add GROQ_API_KEY in the dashboard.
