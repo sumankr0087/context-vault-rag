@@ -44,6 +44,22 @@ class ChatResponse(BaseModel):
     citations: list[dict] = Field(default_factory=list)
 
 
+class CompareRequest(BaseModel):
+    """Validate a request to compare two uploaded document versions."""
+
+    document_id_a: str = Field(min_length=1)
+    document_id_b: str = Field(min_length=1)
+    topic: str | None = Field(default=None, max_length=500)
+
+
+class CompareResponse(BaseModel):
+    """Return a plain-language diff of two document versions."""
+
+    report: str
+    version_a: str
+    version_b: str
+
+
 class UploadResponse(BaseModel):
     """Describe a completed document upload and indexing operation."""
 
@@ -161,6 +177,29 @@ def create_app() -> FastAPI:
             media_type="text/event-stream",
             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
         )
+
+    @application.post("/compare", response_model=CompareResponse)
+    async def compare(payload: CompareRequest, request: Request) -> CompareResponse:
+        """Compare two uploaded document versions and explain what changed."""
+        from rag.compare import compare_documents
+
+        services = _ready_services(request)
+        source_by_id = _uploaded_sources_by_document_id(services.vectorstore)
+        name_by_id = {d.id: d.name for d in _list_uploaded_documents(services.vectorstore)}
+        for doc_id in (payload.document_id_a, payload.document_id_b):
+            if doc_id not in source_by_id:
+                raise HTTPException(status_code=400, detail="One or more selected documents are unavailable.")
+        result = await asyncio.to_thread(
+            compare_documents,
+            services.vectorstore,
+            services.settings,
+            source_by_id[payload.document_id_a],
+            name_by_id.get(payload.document_id_a, "Version A"),
+            source_by_id[payload.document_id_b],
+            name_by_id.get(payload.document_id_b, "Version B"),
+            payload.topic,
+        )
+        return CompareResponse(report=result.report, version_a=result.source_a, version_b=result.source_b)
 
     @application.get("/documents", response_model=list[UploadedDocument])
     async def list_documents(request: Request) -> list[UploadedDocument]:
