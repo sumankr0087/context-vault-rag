@@ -2,6 +2,9 @@ langchain-chroma
 langchain-core
 langchain-ollama
 langchain-text-splitters
+langchain-openai
+langchain-huggingface
+sentence-transformers
 pypdf
 fastapi
 uvicorn[standard]
