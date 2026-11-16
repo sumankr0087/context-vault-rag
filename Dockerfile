@@ -1,5 +1,5 @@
 # DocuSense backend (FastAPI). Runs on Groq LLM + FastEmbed (ONNX) embeddings,
-# so it needs no local Ollama. Works on Render / any Docker host.
+# so it needs no local Ollama. Works on Hugging Face Spaces, Render, any Docker host.
 FROM python:3.11-slim
 
 WORKDIR /app
@@ -10,19 +10,26 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# Cloud defaults: cloud LLM + lightweight ONNX embeddings (no PyTorch),
-# so the service fits in a 512MB free instance.
+# Pre-download the embedding model into a world-readable cache so the first
+# request is fast even when the runtime user is non-root (Hugging Face Spaces).
+RUN FASTEMBED_CACHE_PATH=/app/.cache/fastembed \
+    python -c "from fastembed import TextEmbedding; TextEmbedding('BAAI/bge-small-en-v1.5')" || true
+RUN chmod -R 777 /app/.cache 2>/dev/null || true
+
+# Cloud defaults: cloud LLM + lightweight ONNX embeddings (no PyTorch).
+# Writable paths live under /tmp so the app works whether it runs as root
+# (Render) or as a non-root user (Hugging Face Spaces), and listens on 7860 (HF default).
 ENV LLM_PROVIDER=groq \
     LLM_MODEL=openai/gpt-oss-120b \
     EMBEDDING_PROVIDER=fastembed \
     FASTEMBED_MODEL=BAAI/bge-small-en-v1.5 \
-    DATA_DIR=/app/data \
-    FASTEMBED_CACHE_PATH=/app/.cache/fastembed
-
-# Pre-download the embedding model so the first request isn't slow / failing.
-RUN python -c "from fastembed import TextEmbedding; TextEmbedding('BAAI/bge-small-en-v1.5')" || true
+    FASTEMBED_CACHE_PATH=/app/.cache/fastembed \
+    HF_HOME=/tmp/hf \
+    DATA_DIR=/tmp/data \
+    DOCS_DIR=/tmp/data/docs \
+    PORT=7860
 
 EXPOSE 7860
 
-# GROQ_API_KEY is provided at runtime (Render env / docker -e).
+# GROQ_API_KEY is provided at runtime (HF Space secret / Render env / docker -e).
 CMD ["sh", "-c", "uvicorn api:app --host 0.0.0.0 --port ${PORT:-7860}"]

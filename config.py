@@ -44,7 +44,7 @@ def get_settings() -> Settings:
     # Cloud providers (Groq/OpenAI) use a chat model id; Ollama uses a local tag.
     default_chat = "openai/gpt-oss-120b" if llm_provider == "groq" else "qwen3.5:4b"
     return Settings(
-        docs_dir=Path("docs"),
+        docs_dir=Path(os.getenv("DOCS_DIR", "docs")),
         data_dir=data_dir,
         chroma_dir=data_dir / "chroma",
         memory_db=data_dir / "memory.db",
