@@ -1,11 +1,10 @@
 """Maximal Marginal Relevance retrieval for diverse document context."""
 
-from langchain_chroma import Chroma
 from langchain_core.documents import Document
 
 
 def retrieve_with_mmr(
-    vectorstore: Chroma,
+    vectorstore: object,
     question: str,
     k: int,
     fetch_k: int,

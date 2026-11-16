@@ -101,8 +101,8 @@ def create_app() -> FastAPI:
     @asynccontextmanager
     async def lifespan(application: FastAPI) -> AsyncIterator[None]:
         settings = get_settings()
-        settings.docs_dir.mkdir(exist_ok=True)
-        settings.data_dir.mkdir(exist_ok=True)
+        settings.data_dir.mkdir(parents=True, exist_ok=True)
+        settings.docs_dir.mkdir(parents=True, exist_ok=True)
         memory = SQLiteMemory(settings.memory_db, settings.memory_turns)
         memory.initialize()
         vectorstore = get_vectorstore(settings)

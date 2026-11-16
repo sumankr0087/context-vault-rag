@@ -2,7 +2,6 @@
 
 from collections import defaultdict
 
-from langchain_chroma import Chroma
 from langchain_core.documents import Document
 
 from vectorstore.keyword import retrieve_with_bm25
@@ -10,7 +9,7 @@ from vectorstore.mmr import retrieve_with_mmr
 
 
 def retrieve_with_hybrid(
-    vectorstore: Chroma,
+    vectorstore: object,
     question: str,
     k: int,
     fetch_k: int,

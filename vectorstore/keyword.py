@@ -4,7 +4,6 @@ from collections import Counter
 from math import log
 import re
 
-from langchain_chroma import Chroma
 from langchain_core.documents import Document
 
 
@@ -14,7 +13,7 @@ def tokenize(text: str) -> list[str]:
 
 
 def retrieve_with_bm25(
-    vectorstore: Chroma,
+    vectorstore: object,
     question: str,
     k: int,
     metadata_filter: dict[str, str] | None = None,

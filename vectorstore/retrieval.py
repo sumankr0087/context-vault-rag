@@ -1,6 +1,5 @@
 """Application-facing retrieval boundary using Maximal Marginal Relevance."""
 
-from langchain_chroma import Chroma
 from langchain_core.documents import Document
 
 from vectorstore.mmr import retrieve_with_mmr
@@ -9,7 +8,7 @@ from vectorstore.reranking import rerank_documents
 
 
 def retrieve_documents(
-    vectorstore: Chroma,
+    vectorstore: object,
     question: str,
     k: int,
     metadata_filter: dict[str, str] | None = None,

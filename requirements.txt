@@ -1,10 +1,10 @@
-langchain-chroma
 langchain-core
 langchain-ollama
 langchain-text-splitters
 langchain-community
 langchain-openai
 fastembed
+numpy
 pypdf
 fastapi
 python-multipart
