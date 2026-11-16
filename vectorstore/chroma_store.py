@@ -12,6 +12,8 @@ restart), exactly as before.
 
 from __future__ import annotations
 
+import threading
+
 import numpy as np
 from langchain_core.documents import Document
 
@@ -32,12 +34,16 @@ class SimpleVectorStore:
         self._vectors: list[np.ndarray] = []
         self._texts: list[str] = []
         self._metadatas: list[dict] = []
-        # Load the embedding model now (at startup) so the one-time memory spike
-        # happens at boot, not during the first upload request.
-        try:
-            self._embeddings.embed_query("warmup")
-        except Exception:
-            pass
+        # Warm the embedding model in the background so it is ready for the first
+        # request without blocking app startup (Cloud Run needs the port to open
+        # quickly, or it fails the container with a startup timeout).
+        def _warm() -> None:
+            try:
+                self._embeddings.embed_query("warmup")
+            except Exception:
+                pass
+
+        threading.Thread(target=_warm, daemon=True).start()
 
     # ---- writes ----
     def add_documents(self, documents: list[Document]) -> None:
