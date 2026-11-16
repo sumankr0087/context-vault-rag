@@ -26,6 +26,10 @@ RUN FASTEMBED_CACHE_PATH=/app/.cache/fastembed \
     python -c "from fastembed import TextEmbedding; TextEmbedding('sentence-transformers/all-MiniLM-L6-v2')" || true
 RUN chmod -R 777 /app/.cache 2>/dev/null || true
 
+# Fail the build (with a full traceback in the build log) if the app cannot be
+# imported, instead of letting it crash silently at container startup.
+RUN DATA_DIR=/tmp/b DOCS_DIR=/tmp/b/docs python -c "import api; print('api import OK')"
+
 # Cloud defaults: cloud LLM + lightweight ONNX embeddings (no PyTorch).
 # Writable paths live under /tmp so the app works whether it runs as root
 # (Render) or as a non-root user, and listens on the host's $PORT.
