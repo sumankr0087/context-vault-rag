@@ -18,7 +18,9 @@ RUN chmod -R 777 /app/.cache 2>/dev/null || true
 
 # Cloud defaults: cloud LLM + lightweight ONNX embeddings (no PyTorch).
 # Writable paths live under /tmp so the app works whether it runs as root
-# (Render) or as a non-root user (Hugging Face Spaces), and listens on 7860 (HF default).
+# (Render) or as a non-root user, and listens on the host's $PORT.
+# The MALLOC_*/*_NUM_THREADS vars keep Linux RSS low (cap glibc arenas,
+# return freed memory to the OS, keep math libs single-threaded).
 ENV LLM_PROVIDER=groq \
     LLM_MODEL=openai/gpt-oss-120b \
     EMBEDDING_PROVIDER=fastembed \
@@ -28,8 +30,6 @@ ENV LLM_PROVIDER=groq \
     DATA_DIR=/tmp/data \
     DOCS_DIR=/tmp/data/docs \
     PORT=7860 \
-    # Keep Linux RSS low on a 512MB instance: cap glibc malloc arenas,
-    # return freed memory to the OS, and keep math libs single-threaded.
     MALLOC_ARENA_MAX=2 \
     MALLOC_TRIM_THRESHOLD_=65536 \
     OMP_NUM_THREADS=1 \
