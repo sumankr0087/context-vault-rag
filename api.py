@@ -100,19 +100,29 @@ def create_app() -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(application: FastAPI) -> AsyncIterator[None]:
-        settings = get_settings()
-        settings.data_dir.mkdir(parents=True, exist_ok=True)
-        settings.docs_dir.mkdir(parents=True, exist_ok=True)
-        memory = SQLiteMemory(settings.memory_db, settings.memory_turns)
-        memory.initialize()
-        vectorstore = get_vectorstore(settings)
-        application.state.services = ApiServices(
-            settings=settings,
-            memory=memory,
-            vectorstore=vectorstore,
-            pipeline=AsyncRagPipeline(settings, memory),
-            indexed=has_index(vectorstore),
-        )
+        application.state.services = None
+        application.state.startup_error = None
+        try:
+            settings = get_settings()
+            settings.data_dir.mkdir(parents=True, exist_ok=True)
+            settings.docs_dir.mkdir(parents=True, exist_ok=True)
+            memory = SQLiteMemory(settings.memory_db, settings.memory_turns)
+            memory.initialize()
+            vectorstore = get_vectorstore(settings)
+            application.state.services = ApiServices(
+                settings=settings,
+                memory=memory,
+                vectorstore=vectorstore,
+                pipeline=AsyncRagPipeline(settings, memory),
+                indexed=has_index(vectorstore),
+            )
+        except Exception:
+            import traceback
+
+            application.state.startup_error = traceback.format_exc()
+            print("STARTUP ERROR:\n" + application.state.startup_error, flush=True)
+        # Always yield so the server binds its port even if startup failed; the
+        # error is surfaced on /health instead of crashing the container.
         yield
 
     application = FastAPI(
@@ -132,8 +142,13 @@ def create_app() -> FastAPI:
 
     @application.get("/health")
     async def health(request: Request) -> dict[str, str]:
-        """Report whether the application has a local document index ready to search."""
-        services: ApiServices = request.app.state.services
+        """Report readiness, or the startup error if initialization failed."""
+        error = getattr(request.app.state, "startup_error", None)
+        if error:
+            return {"status": "startup_error", "error": error[-1800:]}
+        services = getattr(request.app.state, "services", None)
+        if services is None:
+            return {"status": "starting"}
         return {"status": "ready" if services.indexed else "index_missing"}
 
     @application.post("/chat", response_model=ChatResponse)
