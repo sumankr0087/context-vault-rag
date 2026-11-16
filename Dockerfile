@@ -56,4 +56,4 @@ EXPOSE 8080
 
 # Listen on the platform-provided $PORT (Cloud Run sets 8080; Render sets its own).
 # GROQ_API_KEY is provided at runtime (Cloud Run / Render env / docker -e).
-CMD ["sh", "-c", "uvicorn api:app --host 0.0.0.0 --port ${PORT:-8080}"]
+CMD ["sh", "-c", "uvicorn server:app --host 0.0.0.0 --port ${PORT:-8080}"]
