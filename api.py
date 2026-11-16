@@ -266,7 +266,13 @@ def create_app() -> FastAPI:
         if uploaded_paths and not chunks:
             raise HTTPException(status_code=400, detail="No readable document content was found in the upload.")
         if chunks:
-            await asyncio.to_thread(services.vectorstore.add_documents, chunks)
+            # Index in small batches so embedding a large document does not spike
+            # memory and crash the instance on constrained (512MB) free hosting.
+            batch_size = 32
+            for start in range(0, len(chunks), batch_size):
+                await asyncio.to_thread(
+                    services.vectorstore.add_documents, chunks[start : start + batch_size]
+                )
             request.app.state.services = replace(services, indexed=True)
         return UploadResponse(
             uploaded_files=[path.name.split("_", maxsplit=1)[-1] for path in uploaded_paths],
