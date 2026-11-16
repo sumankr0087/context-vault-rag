@@ -4,9 +4,19 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
+# onnxruntime (used by fastembed) needs the OpenMP runtime, which the slim
+# image does not ship. Without it, `import onnxruntime` fails at startup and
+# the container never opens its port.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN pip install --no-cache-dir --upgrade pip
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Fail the build early if the native ONNX runtime cannot load (e.g. missing libgomp).
+RUN python -c "import onnxruntime; print('onnxruntime', onnxruntime.__version__, 'OK')"
 
 COPY . .
 
