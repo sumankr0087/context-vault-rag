@@ -30,27 +30,31 @@ class SimpleVectorStore:
     """A minimal dense vector store with cosine similarity and MMR search."""
 
     def __init__(self, settings: Settings) -> None:
-        self._embeddings = create_embeddings(settings)
+        self._settings = settings
+        self._embeddings = None
+        self._emb_lock = threading.Lock()
         self._vectors: list[np.ndarray] = []
         self._texts: list[str] = []
         self._metadatas: list[dict] = []
-        # Warm the embedding model in the background so it is ready for the first
-        # request without blocking app startup (Cloud Run needs the port to open
-        # quickly, or it fails the container with a startup timeout).
-        def _warm() -> None:
-            try:
-                self._embeddings.embed_query("warmup")
-            except Exception:
-                pass
+        # Build the embedding model in the background so loading the ONNX model
+        # never blocks app startup. Cloud Run must see the port open quickly or
+        # it kills the container with a startup timeout.
+        threading.Thread(target=self._embedder, daemon=True).start()
 
-        threading.Thread(target=_warm, daemon=True).start()
+    def _embedder(self):
+        """Return the embedding client, creating it on first use (thread-safe)."""
+        if self._embeddings is None:
+            with self._emb_lock:
+                if self._embeddings is None:
+                    self._embeddings = create_embeddings(self._settings)
+        return self._embeddings
 
     # ---- writes ----
     def add_documents(self, documents: list[Document]) -> None:
         texts = [doc.page_content for doc in documents]
         if not texts:
             return
-        embeddings = self._embeddings.embed_documents(texts)
+        embeddings = self._embedder().embed_documents(texts)
         for doc, embedding in zip(texts, embeddings, strict=True):
             self._vectors.append(_normalize(np.asarray(embedding, dtype=np.float32)))
         for document in documents:
@@ -124,7 +128,7 @@ class SimpleVectorStore:
         indexes = [i for i, metadata in enumerate(self._metadatas) if self._matches(metadata, where)]
         if not indexes:
             return [], np.array([])
-        query_vector = _normalize(np.asarray(self._embeddings.embed_query(query), dtype=np.float32))
+        query_vector = _normalize(np.asarray(self._embedder().embed_query(query), dtype=np.float32))
         matrix = np.vstack([self._vectors[i] for i in indexes])
         return indexes, matrix @ query_vector
 
