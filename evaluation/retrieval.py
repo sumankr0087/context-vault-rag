@@ -4,7 +4,6 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 
-from langchain_chroma import Chroma
 from langchain_core.documents import Document
 
 from config import Settings
@@ -77,7 +76,7 @@ def load_evaluation_cases(path: Path) -> list[EvaluationCase]:
 
 
 def evaluate_retrieval(
-    vectorstore: Chroma,
+    vectorstore: object,
     cases: list[EvaluationCase],
     settings: Settings,
     metadata_filter: dict[str, str] | None = None,

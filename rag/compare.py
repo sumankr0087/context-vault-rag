@@ -2,7 +2,6 @@
 
 from dataclasses import dataclass, field
 
-from langchain_chroma import Chroma
 
 from config import Settings
 from llm.ollama_client import create_chat_model
@@ -30,7 +29,7 @@ Use ONLY the provided excerpts. Produce clear Markdown with these sections:
 If the excerpts don't show a meaningful difference, say so plainly."""
 
 
-def _chunks_for_source(vectorstore: Chroma, source: str, limit: int = 40) -> str:
+def _chunks_for_source(vectorstore: object, source: str, limit: int = 40) -> str:
     """Return the concatenated text of a document's chunks (bounded)."""
     records = vectorstore.get(where={"source": source}, include=["documents"])
     texts = [t for t in (records.get("documents") or []) if t][:limit]
@@ -38,7 +37,7 @@ def _chunks_for_source(vectorstore: Chroma, source: str, limit: int = 40) -> str
 
 
 def compare_documents(
-    vectorstore: Chroma,
+    vectorstore: object,
     settings: Settings,
     source_a: str,
     name_a: str,

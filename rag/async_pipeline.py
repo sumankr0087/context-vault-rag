@@ -4,7 +4,6 @@ import asyncio
 from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
 
-from langchain_chroma import Chroma
 from langchain_core.messages import BaseMessage
 
 from config import Settings
@@ -40,7 +39,7 @@ class AsyncRagPipeline:
 
     async def answer(
         self,
-        vectorstore: Chroma,
+        vectorstore: object,
         session: str,
         question: str,
         metadata_filter: dict[str, str] | None = None,
@@ -66,7 +65,7 @@ class AsyncRagPipeline:
 
     async def stream_answer(
         self,
-        vectorstore: Chroma,
+        vectorstore: object,
         session: str,
         question: str,
         metadata_filter: dict[str, str] | None = None,
@@ -91,7 +90,7 @@ class AsyncRagPipeline:
 
     async def _build_prompt_input(
         self,
-        vectorstore: Chroma,
+        vectorstore: object,
         session: str,
         question: str,
         metadata_filter: dict[str, str] | None,
