@@ -17,7 +17,7 @@ def create_embeddings(settings: Settings):
         return FastEmbedEmbeddings(
             model_name=settings.fastembed_model,
             threads=1,
-            batch_size=4,
+            batch_size=1,
         )
 
     if settings.embedding_provider == "huggingface":

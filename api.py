@@ -283,7 +283,7 @@ def create_app() -> FastAPI:
         if chunks:
             # Index in small batches so embedding a large document does not spike
             # memory and crash the instance on constrained (512MB) free hosting.
-            batch_size = 4
+            batch_size = 1
             for start in range(0, len(chunks), batch_size):
                 await asyncio.to_thread(
                     services.vectorstore.add_documents, chunks[start : start + batch_size]
