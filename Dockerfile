@@ -27,7 +27,15 @@ ENV LLM_PROVIDER=groq \
     HF_HOME=/tmp/hf \
     DATA_DIR=/tmp/data \
     DOCS_DIR=/tmp/data/docs \
-    PORT=7860
+    PORT=7860 \
+    # Keep Linux RSS low on a 512MB instance: cap glibc malloc arenas,
+    # return freed memory to the OS, and keep math libs single-threaded.
+    MALLOC_ARENA_MAX=2 \
+    MALLOC_TRIM_THRESHOLD_=65536 \
+    OMP_NUM_THREADS=1 \
+    OPENBLAS_NUM_THREADS=1 \
+    MKL_NUM_THREADS=1 \
+    TOKENIZERS_PARALLELISM=false
 
 EXPOSE 7860
 
