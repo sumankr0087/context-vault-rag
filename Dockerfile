@@ -29,7 +29,6 @@ ENV LLM_PROVIDER=groq \
     HF_HOME=/tmp/hf \
     DATA_DIR=/tmp/data \
     DOCS_DIR=/tmp/data/docs \
-    PORT=7860 \
     MALLOC_ARENA_MAX=2 \
     MALLOC_TRIM_THRESHOLD_=65536 \
     OMP_NUM_THREADS=1 \
@@ -37,7 +36,8 @@ ENV LLM_PROVIDER=groq \
     MKL_NUM_THREADS=1 \
     TOKENIZERS_PARALLELISM=false
 
-EXPOSE 7860
+EXPOSE 8080
 
-# GROQ_API_KEY is provided at runtime (HF Space secret / Render env / docker -e).
-CMD ["sh", "-c", "uvicorn api:app --host 0.0.0.0 --port ${PORT:-7860}"]
+# Listen on the platform-provided $PORT (Cloud Run sets 8080; Render sets its own).
+# GROQ_API_KEY is provided at runtime (Cloud Run / Render env / docker -e).
+CMD ["sh", "-c", "uvicorn api:app --host 0.0.0.0 --port ${PORT:-8080}"]
