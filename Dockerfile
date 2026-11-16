@@ -10,10 +10,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# Pre-download the embedding model into a world-readable cache so the first
-# request is fast even when the runtime user is non-root (Hugging Face Spaces).
+# Pre-download the (small) embedding model into a world-readable cache so the
+# first request is fast and memory stays low on constrained hosts.
 RUN FASTEMBED_CACHE_PATH=/app/.cache/fastembed \
-    python -c "from fastembed import TextEmbedding; TextEmbedding('BAAI/bge-small-en-v1.5')" || true
+    python -c "from fastembed import TextEmbedding; TextEmbedding('sentence-transformers/all-MiniLM-L6-v2')" || true
 RUN chmod -R 777 /app/.cache 2>/dev/null || true
 
 # Cloud defaults: cloud LLM + lightweight ONNX embeddings (no PyTorch).
@@ -22,7 +22,7 @@ RUN chmod -R 777 /app/.cache 2>/dev/null || true
 ENV LLM_PROVIDER=groq \
     LLM_MODEL=openai/gpt-oss-120b \
     EMBEDDING_PROVIDER=fastembed \
-    FASTEMBED_MODEL=BAAI/bge-small-en-v1.5 \
+    FASTEMBED_MODEL=sentence-transformers/all-MiniLM-L6-v2 \
     FASTEMBED_CACHE_PATH=/app/.cache/fastembed \
     HF_HOME=/tmp/hf \
     DATA_DIR=/tmp/data \

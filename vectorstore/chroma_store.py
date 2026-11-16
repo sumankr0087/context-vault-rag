@@ -32,6 +32,12 @@ class SimpleVectorStore:
         self._vectors: list[np.ndarray] = []
         self._texts: list[str] = []
         self._metadatas: list[dict] = []
+        # Load the embedding model now (at startup) so the one-time memory spike
+        # happens at boot, not during the first upload request.
+        try:
+            self._embeddings.embed_query("warmup")
+        except Exception:
+            pass
 
     # ---- writes ----
     def add_documents(self, documents: list[Document]) -> None:

@@ -19,6 +19,8 @@ services:
       - key: EMBEDDING_PROVIDER
         value: fastembed
       - key: FASTEMBED_MODEL
-        value: BAAI/bge-small-en-v1.5
+        value: sentence-transformers/all-MiniLM-L6-v2
       - key: DATA_DIR
-        value: /app/data
+        value: /tmp/data
+      - key: DOCS_DIR
+        value: /tmp/data/docs

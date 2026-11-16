@@ -72,6 +72,6 @@ def get_settings() -> Settings:
         hf_embedding_model=os.getenv(
             "HF_EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2"
         ),
-        fastembed_model=os.getenv("FASTEMBED_MODEL", "BAAI/bge-small-en-v1.5"),
+        fastembed_model=os.getenv("FASTEMBED_MODEL", "sentence-transformers/all-MiniLM-L6-v2"),
         min_relevance_score=float(os.getenv("MIN_RELEVANCE_SCORE", "0.15")),
     )
